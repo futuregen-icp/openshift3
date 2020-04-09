@@ -4,7 +4,7 @@
 
 [route가 Error 발생](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/route%20Error.md)
 
-[image pull x509 에러](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/image%20pull%20x509.md)
+[node - image pull x509 에러](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/node%20-%20image%20pull%20x509.md)
 
 [internal registrey no basic auth](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/internal%20registrey%20no%20basic%20auth.md)
 
