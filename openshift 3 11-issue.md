@@ -1,4 +1,5 @@
 ﻿Name,Created,Tags
+ 
 [설치 시 pull Err 발생](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/pull%20Err.md) 
 
 [route가 Error 발생](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/route%20Error.md)
