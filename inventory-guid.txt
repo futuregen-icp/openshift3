@@ -1,0 +1,276 @@
+# inventory file 
+
+1. pre 
+[OSEv3:vars]
+## ##-------------------------------------------------------------------------
+## ## Ansible
+## ##-------------------------------------------------------------------------
+ansible_user=root
+ansible_become=yes
+debug_level=2
+
+
+
+###########################################################################
+ansible_user   :   ansible이 구동되는 계정 , default : root , without-password를 이용 ras key 생성 할 것 
+ansible_become :   root가 아닐 경우 반드시 ture 로 설정, 각 노드에 모두  passwd less sudo 설정 
+debug_level    :   디버그 레벨 조정 
+                   이 변수는 systemd-journald.service에 기록되는 INFO 메시지를 설정합니다. 다음 중 하나를 설정하십시오.
+                   오류 및 경고 만 기록하려면 0
+                   일반 정보를 기록하려면 2 (기본 수준)
+                   디버깅 수준 정보를 기록하려면 4
+                   API 수준 디버깅 정보를 기록하는 6 개 (요청 / 응답)
+                   본문 수준 API 디버깅 정보를 기록하는 8
+                   https://docs.openshift.com/container-platform/3.11/install_config/master_node_configuration.html#master-node-config-logging-levels
+###########################################################################
+
+##-------------------------------------------------------------------------
+## Cluster generl 
+##-------------------------------------------------------------------------
+
+
+### ### OpenShift Master Vars
+
+openshift_master_api_port=8443
+openshift_master_console_port=8443
+openshift_master_cluster_hostname=master01.ocp3-11.fu.te
+openshift_master_cluster_public_hostname=master01.ocp3-11.fu.te
+openshift_master_default_subdomain=apps.ocp3-11.fu.te
+openshift_master_cluster_method=native
+# openshift_master_named_certificates=[{"certfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.crt", "keyfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.key", "names": ["fusiona1.ebaykorea.com"], "cafile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.ca-bundle"}]
+# openshift_master_overwrite_named_certificates=true
+
+###########################################################################
+openshift_clock_enabled  :  defaults : true 
+                            chrony 가 설치 되어 있다면 ntp 서비스를 제공하도록 사용 
+                            없다면  playbook에서 ntp설치 
+openshift_master_admission_plugin_config : inventory file에  요구 사항에 따라 매개 변수 및 임의 JSON 값을 설정합니다. 
+                          openshift_master_admission_plugin_config={"ClusterResourceOverride":{"configuration":{"apiVersion":"v1","kind":"ClusterResourceOverrideConfig","memoryRequestToLimitPercent":"25","cpuRequestToLimitPercent":"25","limitCPUToMemoryPercent":"200"}}}
+                          ClusterResourceOverride : memoryRequestToLimitPercent : container 의 메모리 제한이 설정 되거나 기본 값일 경우  - 메모리 요청랑이 %로 재정의 
+                                                    cpuRequestToLimitPercent    : container 의 CPU 제한이 설정 되거나 기본 값일 경우  - CPU 요청랑이 %로 재정의 
+                                                    limitCPUToMemoryPercent     : cpu 제한이 기본 1GB RAM 에서 100% scailing  1core 이다. 이값을 재정의 한다
+                          이외에 다양한 사용자 값을 설치시 재정의 할 수 있다.
+openshift_master_audit_config : API 감사 활성화 
+                          openshift_master_audit_config={"enabled": true, "auditFilePath": "/var/lib/origin/audit-ocp.log", "maximumFileRetentionDays": 14, "maximumFileSizeMegabytes": 500, "maximumRetainedFiles": 5}
+                          				enabled : 기본값음 false 이며 사용을 위해서는 true로 설정 
+                          				auditFilePath  : 로그파일 지정 , 미지지정시 master log에 같이 저장됨 
+                          				maximumFileRetentionDays
+                          				maximumRetainedFiles
+                          				maximumFileSizeMegabytes
+openshift_master_audit_policyfile : API 감사 를 위한 정책 
+                           참조 
+                           https://docs.openshift.com/container-platform/3.11/install_config/master_node_configuration.html#master-node-config-advanced-audit
+openshift_master_cluster_hostname : default : master host name , 클러스터 호스트 네임 지정 
+openshift_master_cluster_public_hostname : default : master host name , 클러스터 호스트 네임 지정 (public 망의 경우 로드벨런스아이피  지정 )
+openshift_master_cluster_method  : mutli master 이용시 optional 
+                                   native  :   mutli master 이용시 
+openshift_rolling_restart_mode   : 업그레이드 플레이 북을 직접 실행할 때 HA 마스터의 롤백 재시작 (즉, 마스터가 한 번에 하나씩 중단됨)을 활성화합니다                                   
+###########################################################################
+
+### ### OpenShift Authentication Vars
+
+# LDAP AND HTPASSWD Authentication (download ipa-ca.crt first)
+#openshift_master_identity_providers=[{'name': 'ldap', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider','attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': 'uid=admin,cn=users,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com', 'bindPassword': 'r3dh4t1!', 'ca': '/etc/origin/master/ipa-ca.crt','insecure': 'false', 'url': 'ldaps://ipa.shared.example.opentlc.com:636/cn=users,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com?uid?sub?(memberOf=cn=ocp-users,cn=groups,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com)'},{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+
+# Just LDAP
+#openshift_master_identity_providers=[{'name': 'ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider','attributes': {'id': ['sAMAccountName'], 'email': ['mail'], 'name': ['name'], 'preferredUsername': ['sAMAccountName']}, 'bindDN': 'fusion@ebaykorea.corp', 'bindPassword': '', 'insecure': 'true', 'url': 'ldap://ebaykorea.corp/dc=ebaykorea,dc=corp?sAMAccountName?sub?(&(objectClass=user)(objectCategory=person))'}]
+
+# Just HTPASSWD
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
+
+###########################################################################
+openshift_master_identity_providers : 아이덴티티 공급자를 설정합니다. 기본은 모두 deny , auth
+                                      https://docs.openshift.com/container-platform/3.11/install_config/configuring_authentication.html#install-config-configuring-authentication
+
+###########################################################################
+
+
+### ### OpenShift Certificates Vars
+
+openshift_hosted_registry_cert_expire_days=3650
+openshift_ca_cert_expire_days=3650
+openshift_node_cert_expire_days=3650
+openshift_master_cert_expire_days=3650
+etcd_ca_default_days=3650
+openshift_certificate_expiry_warning_days=2920
+openshift_certificate_expiry_fail_on_warn=2920
+
+###########################################################################
+openshift_master_ca_certificate : 신뢰 할 수 있는 root ca를 만들어 배포 가능 
+            openshift_master_ca_certificate={'certfile': '</path/to/ca.crt>', 'keyfile': '</path/to/ca.key>'}
+            만료전 redeploy  가능 
+            https://docs.openshift.com/container-platform/3.11/install_config/redeploying_certificates.html#redeploying-new-custom-ca
+openshift_additional_ca : openshift_master_ca_certificate체인증서 일 경우 ca추가 가능 하다고 하나 3.11에서는 문제 발생 openshift_master_ca_certificate 이용 
+openshift_hosted_registry_cert_expire_days : 레지스트리 인증서의 유효기간  기본값 : 730 (2)
+openshift_ca_cert_expire_days  : 자동 생성된 CA의 유효기간  기본값 : 1825 (5)
+openshift_master_cert_expire_days : 자동 생성된 master 인증서의 유효기간  기본값 : 730 (2)
+etcd_ca_default_days : etcd CA, peer, server and client 인증서의 유효기간  기본값 : 1825 (5)
+openshift_certificate_expiry_warning_days : 
+
+###########################################################################
+
+# openshift_master_named_certificates=[{"certfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.crt", "keyfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.key", "names": ["fusiona1.ebaykorea.com"], "cafile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.ca-bundle"}]
+# openshift_master_overwrite_named_certificates=true
+openshift_hosted_router_certificate={"certfile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.crt", "keyfile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.key", "cafile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.ca-bundle"}
+
+###########################################################################
+openshift_master_named_certificates : OpenShift Container Platform API 및 웹 콘솔의 공개 호스트 이름에 대한 사용자 지정 제공 인증서는 클러스터 설치 중에 배포 할 수 있으며 인벤토리 파일에서 구성 할 수 있습니다.
+          openshift_master_named_certificates=[{"certfile": "/path/to/custom1.crt", "keyfile": "/path/to/custom1.key", "cafile": "/path/to/custom-ca1.crt"}]
+		  openshift_master_overwrite_named_certificates=true
+		  ----------------------------------------------------
+          https://docs.openshift.com/container-platform/3.11/install_config/certificate_customization.html#install-config-certificate-customization
+          https://docs.openshift.com/container-platform/3.11/install/configuring_inventory_file.html#advanced-install-custom-certificates
+openshift_master_overwrite_named_certificates : true  :  제공된 값으로 (또는 값이없는) openshift_master_named_certificates를 겹쳐 쓰려면 openshift_master_overwrite_named_certificates 클러스터 변수를 지정하십시오.
+https://docs.openshift.com/container-platform/3.11/install_config/certificate_customization.html#install-config-certificate-customization
+https://docs.openshift.com/container-platform/3.11/install/configuring_inventory_file.html#advanced-install-custom-certificates
+
+openshift_hosted_router_certificate : 라우터의 인증서 지정 (*.app.domain.net)
+
+인증서 갱신을 위해 redeploy 필요 
+https://docs.openshift.com/container-platform/3.11/install_config/certificate_customization.html#install-config-certificate-customization
+
+###########################################################################
+
+### ### OpenShift firewall Vars
+
+###########################################################################
+os_firewall_use_firewalld :  firewalld를 사용하려면 true 기본은 iptables 
+
+###########################################################################
+
+### ### session options in the OAuth
+
+###########################################################################
+openshift_master_session_name   : 세션 이름  // openshift_master_session_name=ssn
+openshift_master_session_max_seconds  : 세션 사용시간  //openshift_master_session_max_seconds=3600
+openshift_master_session_auth_secrets : HMAC를 사용하여 세션을 인증 32 or 64bit secret 사용 권장 
+          openshift_master_session_auth_secrets=['DONT+USE+THIS+SECRET+b4NV+pmZNSO']
+openshift_master_session_encryption_secrets : 세션을 암호화하는 데 사용되는 openshift_master_encryption_secrets의 경우 
+          AES-128, AES-192 또는 AES-256을 선택하려면 비밀 길이가 16, 24 또는 32 자 여야합니다.
+          openshift_master_session_encryption_secrets=['DONT+USE+THIS+SECRET+b4NV+pmZNSO']
+
+###########################################################################
+
+
+### registry or image 
+openshift_registry_selector='node-role.kubernetes.io/infra=true'
+openshift_hosted_registry_replicas=1  
+openshift_hosted_registry_pullthrough=true
+openshift_hosted_registry_acceptschema2=true
+openshift_hosted_registry_enforcequota=true
+
+openshift_docker_additional_registries=registry.ocp3-11.fu.te:5000
+openshift_docker_insecure_registries=registry.ocp3-11.fu.te:5000
+openshift_docker_options="--insecure-registry 172.40.0.0/16 -l warn --log-driver json-file --log-opt max-size=10M --log-opt max-file=3"
+openshift_additional_registry_credentials=[{'host':'registry.ocp3-11.fu.te:5000','user':'admin','password':'admin','test_login':'False'},{'host':'registry.ocp3-11.fu.te','user':'admin','password':'admin','test_login':'False'}]
+
+
+###########################################################################
+
+openshift_registry_selector : 레지스트리 pods를 배포하기 위한 selector 
+openshift_hosted_registry_replicas : 레지스트리 pod 배포 개수 
+openshift_hosted_registry_pullthrough
+openshift_hosted_registry_acceptschema2
+openshift_hosted_registry_enforcequota
+openshift_master_image_policy_config
+
+openshift_docker_additional_registries : 사용할 레지스트리 지정 및 추가 
+openshift_docker_insecure_registries   : insecure_registries 지정 
+openshift_docker_options               :  /etc/sysconfig/docker에 사용될 옵션 지정 
+openshift_additional_registry_credentials : 레지스트리 인증 
+
+###########################################################################
+
+
+### route
+openshift_router_selector='node-role.kubernetes.io/infra=true'
+openshift_hosted_router_replicas=2
+
+
+###########################################################################
+openshift_router_selector :  라우터 pods를 배포하기 위한 selector 
+openshift_hosted_router_replicas : 라우터 배포 개수 (infra node 수)
+###########################################################################
+
+
+### OpenShift Customizing Service Catalog Optionss
+
+#openshift_enable_service_catalog=true
+#template_service_broker_install=true
+#openshift_template_service_broker_namespaces=['openshift']
+#ansible_service_broker_install=true
+#ansible_service_broker_local_registry_whitelist=['.*-apb$']
+
+###########################################################################
+openshift_enable_service_catalog : 서비스 카타로그 사용 
+template_service_broker_install : 설치 중에 템플리트 서비스 브로커 (TSB)가 기본적으로 사용 가능
+openshift_template_service_broker_namespaces : 브로커가 템플릿을 제공 할 하나 이상의 네임 스페이스를 지정하여 템플릿 서비스 브로커를 활성화합니다
+ansible_service_broker_install : OAB 설치시 필요 아닐경우  false 
+ansible_service_broker_local_registry_whitelist : OAB와 함께 OpenShift Container Registry를 사용하여 APB 개발을 수행을 위한 whitelist설정 
+
+###########################################################################
+
+
+
+###########################################################################
+openshift_master_bootstrap_auto_approve  : 기본 값은 false 이며 AWS 에서 clusster  auto scaler 설치시  ture 설정 할 것 
+         TLS 부트 스트랩 자동 승인을 활성화, 부트 스트랩 자격 증명이 제공 될 때 노드가 자동으로 클러스터에 참여
+ansible_service_broker_node_selector  : Ansible Service Broker Pod 를 자동으로 배포하기위한 기본 노드, 
+         기본 설정  {"node-role.kubernetes.io/infra":"true"}
+osm_default_node_selector : Pod 배치에 대한, 정의 기본값은 node-role.kubernetes.io/compute=true
+
+openshift_metrics_hawkular_hostname
+openshift_clusterid
+###########################################################################
+
+### ### OpenShift Basic Vars
+
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.11.188
+openshift_image_tag=v3.11.188
+openshift_pkg_version=-3.11.188
+
+###########################################################################
+openshift_deployment_type : 
+openshift_release       :  release 
+openshift_image_tag		:	이미지 버전  
+openshift_pkg_version	:   rpm 버전 
+
+###########################################################################
+
+### ### OpenShift Network Vars
+
+openshift_portal_net=172.40.0.0/16
+osm_cluster_network_cidr=10.140.0.0/14
+os_sdn_network_plugin_name='redhat/openshift-ovs-subnet'
+#os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+###########################################################################
+openshift_portal_net
+osm_cluster_network_cidr
+os_sdn_network_plugin_name : sdn network 플러그인 정의 
+       ovs-subnet        : 모든 포드가 통신 가능 수평적 연결 
+       ovs-multitenant   :  VNID를 이용하여 프로젝트별 네트워크 격리 
+                            단 VNID 0을 받는 프로젝트는 모든 포트와 통신 가능 
+       ovs-networkpolicy : 해당 플러스인 사용시 프로젝트 관리자가 네트워크 격리 가능 
+
+osm_host_subnet_length   :  OpenShift Container Platform SDN에 의해 ​​포드 IP에 할당 된 호스트 당 서브넷의 크기를 지정
+       기본값은 9로, 각 호스트에 / 23 크기의 서브넷이 할당됨
+       예를 들어, 기본 10.128.0.0/14 클러스터 네트워크가 제공되면 10.128.0.0/23, 10.128.2.0/23, 10.128.4.0/23 등이 할당
+       배포 후에는 다시 구성 불가
+openshift_node_proxy_mode   : 이 변수는 사용할 서비스 프록시 모드를 지정합니다
+openshift_use_flannel       : 기본 SDN 대신 대체 네트워킹 계층으로 flannel을 활성화
+openshift_use_openshift_sdn : openshift_sdn을 비활성화 할 경우 false
+openshift_sdn_vxlan_port    : vxlan 사용하는 포트 4789 (기본 값)
+
+###########################################################################
+
+
+### ##-------------------------------------------------------------------------
+### ## openshift version
+### ##-------------------------------------------------------------------------
+openshift_deployment_type=openshift-enterprise
+openshift_release=v3.11.188
+openshift_image_tag=v3.11.188
+openshift_pkg_version=-3.11.188
+
+
