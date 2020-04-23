@@ -18,5 +18,7 @@ infra node 수 만틈 복제
     2. Create a new default router.
     
         # oc adm router --replicas=1 --service-account=router
+        //원하는 node에 배포시 --selector='<labels>'
+        # oc adm router --replicas=1 --service-account=router --selector='kubernetes.io/hostname=infra01.ocp3-11.fu.te'
         에러 발생시 아래와 같이 
         # oc scale dc/router --replicas=1
