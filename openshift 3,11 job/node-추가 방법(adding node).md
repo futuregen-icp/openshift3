@@ -49,6 +49,13 @@
 
 	[lb]
 	lb01.ocp3-11.fu.te
+	
+	
+	---------------------------
+        ##worker node 추가시
+	[new_nodes]
+	worker03.ocp3-11.fu.te openshift_ip=192.168.40.223 openshift_public_ip=192.168.40.223 openshift_public_hostname=worker03.ocp3-11.fu.te openshift_node_group_name='node-config-compute'
+	----------------------------
 
 
 ### Master  node  add 
