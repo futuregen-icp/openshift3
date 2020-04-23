@@ -12,6 +12,12 @@ Re password :
 oc adm policy add-cluster-role-to-user cluster-admin admin
 ```
 
+#### 추가한 아이디에 admin role을 부여
+```
+oc adm policy add-role-to-user admin admin
+```
+
+#### api, controllers 재구동
 ```
 master-restart api
 master-restart controllers
