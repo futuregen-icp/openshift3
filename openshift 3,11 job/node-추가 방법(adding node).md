@@ -60,3 +60,12 @@ group name check 및  config
 node scaleup
 
 	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-master playbooks/openshift-master/scaleup.yml
+	
+### worker node  add 
+group name check 및  config
+
+	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-node playbooks/openshift-master/openshift_node_group.yml 
+
+node scaleup
+
+	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-node  playbooks/openshift-node/scaleup.yml
