@@ -2,7 +2,7 @@
 
 ## Subscription 등록(전체 서버. disconnect 환경인 경우 외부 연결되는 서버에만)
 
-    subscription-manager register --username=locli5427 --password=Hellena1^^
+    subscription-manager register --username=***** --password=******
     subscription-manager refresh
     subscription-manager list --available --matches '*OpenShift*'
     subscription-manager attach --pool=8a85f99c707807c801709f913ded7153
