@@ -99,3 +99,6 @@ group name check 및  config
 node scaleup
 
 	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-etcd  playbooks/openshift-etcd/scaleup.yml
+
+Unpause the container before stopping 발상
+	docker unpause "`docker ps | grep  k8s_POD_master-api-master02.ocp3-11.fu.te | awk '{print $1}'`"
