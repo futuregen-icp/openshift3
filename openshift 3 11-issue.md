@@ -15,3 +15,5 @@ Name,Created,Tags
 [storage dynamic provisioning](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/storage%20dynamic%20provisioning.md)
 
 [admin ID/PASS 잊어렸을때 ](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/admin-user-add.md)
+
+[Unpause-the-container-before-stopping](https://github.com/futuregen-icp/openshift3/blob/master/openshift%203%2011-issue/Unpause-the-container-before-stopping.md)
