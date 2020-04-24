@@ -57,6 +57,20 @@
 	worker03.ocp3-11.fu.te openshift_ip=192.168.40.223 openshift_public_ip=192.168.40.223 openshift_public_hostname=worker03.ocp3-11.fu.te openshift_node_group_name='node-config-compute'
 	----------------------------
 
+	---------------------------
+	##etcd node 추가시
+	[OSEv3:children]
+	masters
+	etcd
+	new_etcd
+	nodes
+	lb
+	...
+	[etcd]
+	master01.ocp3-11.fu.te openshift_ip=192.168.40.151 openshift_public_ip=192.168.40.151 openshift_public_hostname=master01.ocp3-11.fu.te
+	master02.ocp3-11.fu.te openshift_ip=192.168.40.152 openshift_public_ip=192.168.40.152 openshift_public_hostname=master02.ocp3-11.fu.te
+	----------------------------
+
 
 ### Master  node  add 
 group name check 및  config
@@ -76,3 +90,12 @@ group name check 및  config
 node scaleup
 
 	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-node  playbooks/openshift-node/scaleup.yml
+
+### etcd node  add 
+group name check 및  config
+
+	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-etcd playbooks/openshift-master/openshift_node_group.yml 
+
+node scaleup
+
+	ansible-playbook -i /opt/ocp3-11/hosts.v01-lb01-etcd  playbooks/openshift-etcd/scaleup.yml
