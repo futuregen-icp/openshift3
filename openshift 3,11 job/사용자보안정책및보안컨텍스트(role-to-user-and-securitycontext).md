@@ -51,6 +51,20 @@ oc adm policy add-role-to-user admin <username>
 **사용자에게 관리자 권한 제거**  
 oc adm policy remove-role-to-user admin <username>
 
+## Service Acount
+web-console 처럼 일반적인 사용자 자격증명이 불가능할 겅우 API를 독립적으로 호출하도록 하기위한 계정  
+ - pod 복제를 위한 replica set 호출  
+ - 내부 응용프로그램 조회를 위해 호출시  
+ - 외부 모니터링등의 연동을 위한 호출시 
+ - 일반 계정과 연동을 위해 서비스 계정을 위한 자격 증명   
+
+프로젝트 생성시 기본적으로 생성되는 Service Acount
+
+Service Acount|내용 
+--------------|----
+builder|Pod 빌드용으로 사용
+deployer|Pod 배포용으로 사용
+default|기본으로 사용되는 Service Account
 
 ## 보안 컨텍스트 (SCC)
 
