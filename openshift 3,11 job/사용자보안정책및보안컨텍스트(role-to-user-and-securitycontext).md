@@ -87,13 +87,11 @@ hostaccess|모든 호스트 네임스페이스에 대한 액세스를 허용하�
 hostmount-anyuid| 	restricted SCC와 유사한 액세스를 정의하지만 팟(Pod)을 통해 호스트 마운트 및 UID를 허용합니다. 이 SCC는 주로 지속적 볼륨 리사이클러에서 사용됩니다. UID 0을 포함해 UID로 호스트 파일 시스템 액세스가 필요한 팟(Pod)에만 이 SCC를 부여합니다.
 hostnetwork|	호스트 네트워킹 및 호스트 포트 사용을 허용하지만 여전히 네임스페이스에 할당된 UID와 SELinux 컨텍스트로 팟(Pod)이 실행되어야 합니다. 호스트 네트워크 액세스가 필요한 팟(Pod)에만 이 SCC를 부여합니다.
 node-exporter|기본 제공 Prometheus 노드 익스포터에 적절한 액세스를 제공합니다.
-<<<<<<< HEAD
 nonroot|	restricted SCC와 유사한 액세스를 정의하지만, 사용자가 루트가 아닌 UID로 실행될 수 있게 합니다. 컨테이너 런타임의 Manifest 또는 사용자가 UID를 지정해야 합니다.
-=======
-nonroot|restricted SCC와 유사한 액세스를 정의하지만, 사용자가 루트가 아닌 UID로 실행될 수 있게 합니다. 컨테이너 런타임의 Manifest 또는 사용자가 UID를 지정해야 합니다.
->>>>>>> ebdd1efe4ec665247415fb6b3c38f8a17d276192
 privileged|모든 권한 있는 호스트 기능 및 사용자, 그룹, fsGroup으로서 또는 SELinux 컨텍스트를 사용하여 실행하는 기능에 대한 액세스를 허용합니다. 가능한 최고의 액세스 권한이 필요한 클러스터 관리에만 이 SCC를 부여합니다.
 restricted|모든 호스트 기능에 대한 액세스를 정의하고 네임스페이스에 할당된 UID와 SELinux 컨텍스트로 팟(Pod)이 실행되어야 합니다. 이는 가장 제한적인 SCC이며 기본적으로 인증된 사용자를 위해 사용됩니다.
+
+
 
 **openshift에서는 기본적으로 restricted scc를 이용하여 pod 생성** 
 
