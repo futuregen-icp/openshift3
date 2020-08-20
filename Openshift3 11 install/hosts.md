@@ -61,7 +61,7 @@
     openshift_master_console_port=8443
     openshift_master_cluster_hostname=master01.ocp3-11.fu.te
     openshift_master_cluster_public_hostname=master01.ocp3-11.fu.te
-    # openshift_master_named_certificates=[{"certfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.crt", "keyfile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.key", "names": ["fusiona1.ebaykorea.com"], "cafile": "/home/ebaycloud/named_certificates/STAR.ebaykorea.com/STAR_ebaykorea_com.ca-bundle"}]
+    # openshift_master_named_certificates=[{"certfile": "/home/example/named_certificates/STAR.example.com/STAR_example_com.crt", "keyfile": "/home/example/named_certificates/STAR.example.com/STAR_example_com.key", "names": ["a1.example.com"], "cafile": "/home/example/named_certificates/STAR.example.com/STAR_example_com.ca-bundle"}]
     openshift_master_default_subdomain=apps.ocp3-11.fu.te
     # openshift_master_overwrite_named_certificates=true
     openshift_master_cluster_method=native
@@ -81,14 +81,14 @@
     #openshift_master_identity_providers=[{'name': 'ldap', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider','attributes': {'id': ['dn'], 'email': ['mail'], 'name': ['cn'], 'preferredUsername': ['uid']}, 'bindDN': 'uid=admin,cn=users,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com', 'bindPassword': 'r3dh4t1!', 'ca': '/etc/origin/master/ipa-ca.crt','insecure': 'false', 'url': 'ldaps://ipa.shared.example.opentlc.com:636/cn=users,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com?uid?sub?(memberOf=cn=ocp-users,cn=groups,cn=accounts,dc=shared,dc=example,dc=opentlc,dc=com)'},{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
     
     # Just LDAP
-    #openshift_master_identity_providers=[{'name': 'ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider','attributes': {'id': ['sAMAccountName'], 'email': ['mail'], 'name': ['name'], 'preferredUsername': ['sAMAccountName']}, 'bindDN': 'fusion@ebaykorea.corp', 'bindPassword': '', 'insecure': 'true', 'url': 'ldap://ebaykorea.corp/dc=ebaykorea,dc=corp?sAMAccountName?sub?(&(objectClass=user)(objectCategory=person))'}]
+    #openshift_master_identity_providers=[{'name': 'ldap_provider', 'challenge': 'true', 'login': 'true', 'kind': 'LDAPPasswordIdentityProvider','attributes': {'id': ['sAMAccountName'], 'email': ['mail'], 'name': ['name'], 'preferredUsername': ['sAMAccountName']}, 'bindDN': 'on@examplea.corp', 'bindPassword': '', 'insecure': 'true', 'url': 'ldap://example.corp/dc=example,dc=corp?sAMAccountName?sub?(&(objectClass=user)(objectCategory=person))'}]
     
     # Just HTPASSWD
     openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}]
     
     # LDAP and HTPASSWD dependencies
     #Command => htpasswd -c /root/htpasswd.openshift ocpadmin
-    #openshift_master_htpasswd_file=/home/ebaycloud/htpasswd.openshift
+    #openshift_master_htpasswd_file=/home/example/htpasswd.openshift
     #openshift_master_ldap_ca_file=/root/ipa-ca.crt
     
     ###########################################################################
@@ -97,7 +97,7 @@
     # Router
     openshift_router_selector='node-role.kubernetes.io/infra=true'
     openshift_hosted_router_replicas=2
-    # openshift_hosted_router_certificate={"certfile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.crt", "keyfile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.key", "cafile": "/home/ebaycloud/named_certificates/STAR.a1.ebaykorea.com/STAR_a1_ebaykorea_com.ca-bundle"}
+    # openshift_hosted_router_certificate={"certfile": "/home/example/named_certificates/STAR.a1.example.com/STAR_a1_example_com.crt", "keyfile": "/home/example/named_certificates/STAR.a1.example.com/STAR_a1_example_com.key", "cafile": "/home/example/named_certificates/STAR.a1.example.com/STAR_a1_example_com.ca-bundle"}
     
     # Registry
     openshift_registry_selector='node-role.kubernetes.io/infra=true'
