@@ -1,6 +1,6 @@
 ### openshift 3.11 인증서 갱신 작업 
 
-##개요 
+## 개요 
 
 ```
 Openshift는 ssl 접속을 위해 인증서를 사용한다
@@ -63,14 +63,14 @@ $ ansible-playbook -i <inventory_file> playbooks/openshift-etcd/redeploy-certifi
 
 ### Redeploying Registry or Router Certificates Only
 
-** Redeploying Registry Certificates Only **
+**Redeploying Registry Certificates Only **
 
 ```
 $ cd /usr/share/ansible/openshift-ansible
 $ ansible-playbook -i <inventory_file>  playbooks/openshift-hosted/redeploy-registry-certificates.yml
 ```
 
-** Redeploying Router Certificates Only **
+**Redeploying Router Certificates Only **
 
 ```
 $ cd /usr/share/ansible/openshift-ansible
