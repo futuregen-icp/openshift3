@@ -1,15 +1,14 @@
 참조) Manually create the master and API certificates when API is down and redeploy-certificates playbook fails
  - https://access.redhat.com/solutions/5140431 
 
-위 KCS를 기반으로 테스트를 진행하였으며, KCS에 없는 부분(admin.kubeconfig 관련) 등이 포함된 내용입니다.
+### 1. master.server.crt 생성
 
-1. **master.server.crt** 
+##### /etc/origin/master/master.server.crt는 API server 인증서이며, CN(common name)과 Subject Alternative Name 정보는 기존 /etc/origin/master/master.server.crt 파일에서 확인할 수 있습니다. 
+##### NOTE: 'oc adm' command는 /etc/origin/master/ca.serial.txt file이 존재하는 master node에서 수행되어야 합니다.
 
-/etc/origin/master/master.server.crt는 API server 인증서이며, CN(common name)과 Subject Alternative Name 정보는 기존 /etc/origin/master/master.server.crt 파일에서 확인할 수 있습니다.
-NOTE: 'oc adm' command는 /etc/origin/master/ca.serial.txt file이 존재하는 master node에서 수행되어야 합니다.
-
-아래와 같은 방식으로 수행됩니다.
-$ oc adm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt --signer-key=/etc/origin/master/ca.key --signer-serial=/etc/origin/master/ca.serial.txt --hostnames='<all-hostnames-and-IP-address>' --cert=/etc/origin/master/master.server.crt  --key=/etc/origin/master/master.server.key
+###### 아래와 같은 방식으로 수행하여 기존 hosts 정보 확인.
+```
+oc adm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt --signer-key=/etc/origin/master/ca.key --signer-serial=/etc/origin/master/ca.serial.txt --hostnames='<all-hostnames-and-IP-address>' --cert=/etc/origin/master/master.server.crt  --key=/etc/origin/master/master.server.key
 
 (<all-hostnames-and-IP-address> 정보 확인)
 $ openssl x509 -in /etc/origin/master/master.server.crt -text -noout
@@ -24,123 +23,154 @@ Data:
 .....
     X509v3 Subject Alternative Name: 
       DNS:external.example.com, DNS:internal.example.com, DNS:master-1.example.com, DNS:kubernetes, DNS:kubernetes.default, DNS:kubernetes.default.svc, DNS:kubernetes.default.svc.cluster.local, DNS:openshift, DNS:10.74.249.116, DNS:172.30.0.1, IP Address:10.74.249.116, IP Address:172.30.0.1
+```
 
-/etc/origin/master/master.server.crt에서 확인된 hostnames과 IP address 정보를 --hostnames에 넣고 수행합니다.
+######  멀티 마스터 경우 모든 DNS정보를 hostnames에 추가 하여 인증서 생성
+```
+oc adm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt --signer-key=/etc/origin/master/ca.key --signer-serial=/etc/origin/master/ca.serial.txt --hostnames='kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,master.example.com,openshift,openshift.default,openshift.default.svc,openshift.default.svc.cluster.local,10.76.161.55,172.30.0.1,192.168.20.6' --cert=/etc/origin/master/master.server.crt  --key=/etc/origin/master/master.server.key
+```
+###### 아래 명령어를 통해 master.server.crt와 master.server.key의 md5 일치 확인
+```
+openssl x509 -modulus -noout -in /etc/origin/master/master.server.crt | openssl md5
+openssl rsa -modulus -noout -in  /etc/origin/master/master.server.key | openssl md5
+```
+###### master.server.crt master.server.key 을 타 마스터 노드에 복사
+```
+scp /etc/origin/master/master.server.crt root@master02:/etc/origin/master 
+scp /etc/origin/master/master.server.key root@master02:/etc/origin/master 
+```
+### 2. openshift-master 갱신
 
-(수행 방법)
-$ oc adm ca create-server-cert --signer-cert=/etc/origin/master/ca.crt --signer-key=/etc/origin/master/ca.key --signer-serial=/etc/origin/master/ca.serial.txt --hostnames='kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local,master.example.com,openshift,openshift.default,openshift.default.svc,openshift.default.svc.cluster.local,10.76.161.55,172.30.0.1,192.168.20.6' --cert=/etc/origin/master/master.server.crt  --key=/etc/origin/master/master.server.key
+###### /etc/origin/master/openshift-master.crt는 각 마스터 노드에 대해 개별적으로 생성해야 하며 인증서와 키를 생성한 후에 base64 인코딩 값을 /etc/origin/master/openshift-master.kubeconfig에 추가해야 합니다.
+###### 모든 마스터 노드에서 각각 인코딩된 형식입니다.
+```
+openssl genrsa -out /etc/origin/master/openshift-master.key 2048
 
-아래 명령어를 통해 master.server.crt와 master.server.key의 md5 일치 확인
-$ openssl x509 -modulus -noout -in /etc/origin/master/master.server.crt | openssl md5
-$ openssl rsa -modulus -noout -in  /etc/origin/master/master.server.key | openssl md5
-
-2. **openshift-master**
-
-/etc/origin/master/openshift-master.crt는 각 마스터 노드에 대해 개별적으로 생성해야 하며 인증서와 키를 생성한 후에 base64 인코딩 값을 /etc/origin/master/openshift-master.kubeconfig에 추가해야 합니다.
-모든 마스터 노드에서 각각 인코딩된 형식입니다.
-
-(수행 방법)
-$ openssl genrsa -out /etc/origin/master/openshift-master.key 2048
-
-$ vi extension.ext
+vi extension.ext
 keyUsage             = critical,digitalSignature,keyEncipherment
 extendedKeyUsage     = clientAuth
 basicConstraints     = critical,CA:false
 
-$ openssl req -new -key /etc/origin/master/openshift-master.key -subj "/O=system:masters/O=system:openshift-master/CN=system:openshift-master" -out /etc/origin/master/openshift-master.csr
+openssl req -new -key /etc/origin/master/openshift-master.key -subj "/O=system:masters/O=system:openshift-master/CN=system:openshift-master" -out /etc/origin/master/openshift-master.csr
 
-$ openssl x509 -req -in /etc/origin/master/openshift-master.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/openshift-master.crt -days 730 -sha256 -extfile extension.ext (인증서 유효기간은 730일로 수행하거나, 필요시 변경하여 수행하면 됨)
+openssl x509 -req -in /etc/origin/master/openshift-master.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/openshift-master.crt -days 730 -sha256 -extfile extension.ext 
+(인증서 유효기간은 730일로 수행하거나, 필요시 변경하여 수행하면 됨)
+```
 
-아래 명령어를 통해 openshift-master.crt와 openshift-master.key의 md5 일치 확인
-$ openssl x509 -modulus -noout -in /etc/origin/master/openshift-master.crt | openssl md5
-$ openssl rsa -modulus -noout -in  /etc/origin/master/openshift-master.key | openssl md5
+###### 아래 명령어를 통해 openshift-master.crt와 openshift-master.key의 md5 일치 확인
+```
+openssl x509 -modulus -noout -in /etc/origin/master/openshift-master.crt | openssl md5
+openssl rsa -modulus -noout -in  /etc/origin/master/openshift-master.key | openssl md5
+```
 
-위 수행 결과물인 etc/origin/master/openshift-master.crt와 /etc/origin/master/openshift-master.key 값을 base64 format으로 변경하여 /etc/origin/master/openshift-master.kubeconfig의 client-certificate-data와 client-key-data에 대체합니다.
-
-$ cat /etc/origin/master/openshift-master.crt | base64 -w 0 
+###### 위 수행 결과물인 etc/origin/master/openshift-master.crt와 /etc/origin/master/openshift-master.key 값을 base64 format으로 변경하여 /etc/origin/master/openshift-master.kubeconfig의 client-certificate-data와 client-key-data에 대체합니다.
+```
+cat /etc/origin/master/openshift-master.crt | base64 -w 0 
 LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JURKakNDQWc2Z0F3SUJBZ0lKQU5aT.....
 
-$ cat /etc/origin/master/openshift-master.key | base64 -w 0
+cat /etc/origin/master/openshift-master.key | base64 -w 0
 LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3mR0MnN1TU5EZ0hmY3hxOGpZ.....
 
-$ vi /etc/origin/master/openshift-master.kubeconfig
+vi /etc/origin/master/openshift-master.kubeconfig
 apiVersion: v1
 clusters:
 ...
 ...
     client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JURKakNDQWc2Z0F3SUJBZ0lKQU5aT.....
     client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb3mR0MnN1TU5EZ0hmY3hxOGpZ.....
+```
 
-3. **master.kubelet-client**
+### 3.  master.kubelet-client 갱신
 
-/etc/origin/master/master.kubelet-client.crt key-pair는 모든 master nodes에서 동일하게 사용되기 때문에, 하나의 master node에서 생성하여 다른 master nodes로 copy하여 사용합니다.
+###### /etc/origin/master/master.kubelet-client.crt key-pair는 모든 master nodes에서 동일하게 사용되기 때문에, 하나의 master node에서 생성하여 다른 master nodes로 copy하여 사용합니다.
 
-(수행 방법)
-$ openssl genrsa -out /etc/origin/master/master.kubelet-client.key 2048
+```
+openssl genrsa -out /etc/origin/master/master.kubelet-client.key 2048
 
-$ openssl req -new -key /etc/origin/master/master.kubelet-client.key -subj "/O=system:node-admins/CN=system:openshift-node-admin" -out /etc/origin/master/master.kubelet-client.csr
+openssl req -new -key /etc/origin/master/master.kubelet-client.key -subj "/O=system:node-admins/CN=system:openshift-node-admin" -out /etc/origin/master/master.kubelet-client.csr
 
-$ openssl x509 -req -in /etc/origin/master/master.kubelet-client.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/master.kubelet-client.crt -days 730 -sha256 -extfile extension.ext
+openssl x509 -req -in /etc/origin/master/master.kubelet-client.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/master.kubelet-client.crt -days 730 -sha256 -extfile extension.ext
+```
 
-아래 명령어를 통해 master.kubelet-client.crt와 master.kubelet-client.key의 md5 일치 확인
-$ openssl x509 -modulus -noout -in /etc/origin/master/master.kubelet-client.crt | openssl md5
-$ openssl rsa -modulus -noout -in  /etc/origin/master/master.kubelet-client.key | openssl md5
+###### 아래 명령어를 통해 master.kubelet-client.crt와 master.kubelet-client.key의 md5 일치 확인
+```
+openssl x509 -modulus -noout -in /etc/origin/master/master.kubelet-client.crt | openssl md5
+openssl rsa -modulus -noout -in  /etc/origin/master/master.kubelet-client.key | openssl md5
+```
 
-4. **master.proxy-client**
+### 4. master.proxy-client
 
-/etc/origin/master/master.proxy-client.crt key-pair 또한 모든 master nodes에서 동일하게 사용되기 때문에, 하나의 master node에서 생성하여 다른 master nodes로 copy하여 사용합니다.
+###### /etc/origin/master/master.proxy-client.crt key-pair 또한 모든 master nodes에서 동일하게 사용되기 때문에, 하나의 master node에서 생성하여 다른 master nodes로 copy하여 사용합니다.
+```
+openssl genrsa -out /etc/origin/master/master.proxy-client.key 2048
 
-(수행 방법)
-$ openssl genrsa -out /etc/origin/master/master.proxy-client.key 2048
+openssl req -new -key /etc/origin/master/master.proxy-client.key -subj "/CN=system:master-proxy" -out /etc/origin/master/master.proxy-client.csr
 
-$ openssl req -new -key /etc/origin/master/master.proxy-client.key -subj "/CN=system:master-proxy" -out /etc/origin/master/master.proxy-client.csr
+openssl x509 -req -in /etc/origin/master/master.proxy-client.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/master.proxy-client.crt -days 730 -sha256 -extfile extension.ext
+```
 
-$ openssl x509 -req -in /etc/origin/master/master.proxy-client.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/master.proxy-client.crt -days 730 -sha256 -extfile extension.ext
+###### 아래 명령어를 통해 master.proxy-client.crt와 master.proxy-client.key의 md5 일치 확인
+```
+openssl x509 -modulus -noout -in /etc/origin/master/master.proxy-client.crt | openssl md5
+openssl rsa -modulus -noout -in  /etc/origin/master/master.proxy-client.key | openssl md5
+```
 
-아래 명령어를 통해 master.proxy-client.crt와 master.proxy-client.key의 md5 일치 확인
-$ openssl x509 -modulus -noout -in /etc/origin/master/master.proxy-client.crt | openssl md5
-$ openssl rsa -modulus -noout -in  /etc/origin/master/master.proxy-client.key | openssl md5
+### 5. cluster-admins
 
-5. **cluster-admins**
+###### 위의 2. openshift-master과 같이 각 마스터 노드에 대해 개별적으로 생성해야 하며 인증서와 키를 생성한 후에 base64 인코딩 값을 /etc/origin/master/admin.kubeconfig에 추가합니다.
 
-위의 2. openshift-master과 같이 각 마스터 노드에 대해 개별적으로 생성해야 하며 인증서와 키를 생성한 후에 base64 인코딩 값을 /etc/origin/master/admin.kubeconfig에 추가합니다.
+```
+openssl genrsa -out /etc/origin/master/admin.key 2048
 
-(수행 방법)
-$ openssl genrsa -out /etc/origin/master/admin.key 2048
+openssl req -new -key /etc/origin/master/admin.key -out /etc/origin/master/admin.csr -subj "/O=system:masters/O=system:cluster-admins/CN=system:admin"
 
-$ openssl req -new -key /etc/origin/master/admin.key -out /etc/origin/master/admin.csr -subj "/O=system:masters/O=system:cluster-admins/CN=system:admin"
+openssl x509 -req -in /etc/origin/master/admin.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/admin.crt -days 730 -sha256 -extfile extension.ext
+```
 
-$ openssl x509 -req -in /etc/origin/master/admin.csr -CA /etc/origin/master/ca.crt -CAkey /etc/origin/master/ca.key -CAcreateserial -out /etc/origin/master/admin.crt -days 730 -sha256 -extfile extension.ext
+###### 아래 명령어를 통해 /etc/origin/master/admin.crt와 /etc/origin/master/admin.key의 md5 일치 확인
+```
+openssl x509 -modulus -noout -in /etc/origin/master/admin.crt | openssl md5
+openssl rsa -modulus -noout -in  /etc/origin/master/admin.key | openssl md5
+```
+###### base64 format으로 변경하여  admin.kubeconfig에 반영
+```
+cat /etc/origin/master/admin.crt | base64 -w 0   
+cat /etc/origin/master/admin.key | base64 -w 0
 
-$ openssl x509 -modulus -noout -in /etc/origin/master/admin.crt | openssl md5
-$ openssl rsa -modulus -noout -in  /etc/origin/master/admin.key | openssl md5
-
-아래 명령어를 통해 /etc/origin/master/admin.crt와 /etc/origin/master/admin.key의 md5 일치 확인
-$ cat /etc/origin/master/admin.crt | base64 -w 0   
-$ cat /etc/origin/master/admin.key | base64 -w 0
-
-$ vi /etc/origin/master/admin.kubeconfig
+vi /etc/origin/master/admin.kubeconfig
 ...
     client-certificate-data: .....
     client-key-data: .....
+```
 
-6. **aggregator-front-proxy**
+### 6. aggregator-front-proxy 갱신
 
-/etc/origin/master/aggregator-front-proxy.crt는 service catalog 및 service brokers(ansible and template service brokers)와 같은 외부 통합 API 서비스가 있을 때 사용됩니다.
-(local test 환경에서 해당 작업을 안하는 경우, master api 재구동이 안되서 추가하였습니다.)
+###### /etc/origin/master/aggregator-front-proxy.crt는 service catalog 및 service brokers(ansible and template service brokers)와 같은 외부 통합 API 서비스가 있을 때 사용됩니다.
+###### (local test 환경에서 해당 작업을 안하는 경우, master api 재구동이 안되서 추가하였습니다.)
 
-(수행 방법)
-$ oc adm create-api-client-config --certificate-authority=/etc/origin/master/front-proxy-ca.crt --signer-cert=/etc/origin/master/front-proxy-ca.crt --signer-key=/etc/origin/master/front-proxy-ca.key --user aggregator-front-proxy --client-dir=/root --signer-serial=/etc/origin/master/ca.serial.txt
+```
+oc adm create-api-client-config --certificate-authority=/etc/origin/master/front-proxy-ca.crt --signer-cert=/etc/origin/master/front-proxy-ca.crt --signer-key=/etc/origin/master/front-proxy-ca.key --user aggregator-front-proxy --client-dir=/root --signer-serial=/etc/origin/master/ca.serial.txt
+```
 
-위 명령어 결과물인 aggregator-front-proxy.crt, aggregator-front-proxy.key, aggregator-front-proxy.kubeconfig 파일들을 /etc/origin/master directory에 copy
-$ cp aggregator-front-proxy.crt  aggregator-front-proxy.key  aggregator-front-proxy.kubeconfig /etc/origin/master
+###### 위 명령어 결과물인 aggregator-front-proxy.crt, aggregator-front-proxy.key, aggregator-front-proxy.kubeconfig 파일들을 /etc/origin/master directory에 copy
+```
+cp aggregator-front-proxy.crt  aggregator-front-proxy.key  aggregator-front-proxy.kubeconfig /etc/origin/master
+```
+######  aggregator-front-proxy.crt, aggregator-front-proxy.key, aggregator-front-proxy.kubeconfig 각 노드에 복사
+```
+scp aggregator-front-proxy.crt root@master02:/etc/origin/master/aggregator-front-proxy.crt
+scp aggregator-front-proxy.key root@master02:/etc/origin/master/aggregator-front-proxy.key
+scp aggregator-front-proxy.kubeconfig root@master02:/etc/origin/master/aggregator-front-proxy.kubeconfig
+```
 
-1~6 완료 후에, api & controllers 재구동
-$ master-restart api
+### 7. 1~6 완료 후에, api & controllers 재구동
+```
+master-restart api
+master-restart controllers
+```
 
-$ master-restart controllers
-
-정상 재구동 이후에 easy-mode.yaml 플레이북 수행을 통해 확인 결과, 아래 인증서들에 대해 730이로 갱신된 것을 확인하였습니다.
+###### 정상 재구동 이후에 easy-mode.yaml 플레이북 수행을 통해 확인 결과, 아래 인증서들에 대해 730이로 갱신된 것을 확인하였습니다.
+```
 - ocp_certs 
 /etc/origin/master/master.server.crt
 /etc/origin/master/master.proxy-client.crt
@@ -149,58 +179,62 @@ $ master-restart controllers
 - kubeconfigs
 /etc/origin/master/admin.kubeconfig
 /etc/origin/master/openshift-master.kubeconfig
+```
 
 7. **service signing certificate or key pairs 갱신**
 
-(수행 방법)
-$ oc delete secret router-metrics-tls -n default
+```
+oc delete secret router-metrics-tls -n default
+oc delete secret console-serving-cert -n openshift-console
+oc delete secret heapster-certs -n openshift-infra
+oc delete secret prometheus-tls -n openshift-logging
 
-$ oc delete secret console-serving-cert -n openshift-console
+oc get secret router-metrics-tls -n default
+oc get secret console-serving-cert -n openshift-console
+oc get secret heapster-certs -n openshift-infra
+oc get secret prometheus-tls -n openshift-logging
 
-$ oc delete secret heapster-certs -n openshift-infra
+NAME                 TYPE                DATA        AGE
+router-metrics-tls   kubernetes.io/tls     2         11s
+console-serving-cert kubernetes.io/tls     2         11s
+heapster-certs       kubernetes.io/tls     2         11s
+prometheus-tls       kubernetes.io/tls     2         11s
+```
 
-$ oc delete secret prometheus-tls -n openshift-logging
+### 8. Recreate Node TLS bootstrapped certificates and kubeconfig files - (node 인증서)
 
-8. **Recreate Node TLS bootstrapped certificates and kubeconfig files**
+###### (참조) Manually recreate OpenShift Node TLS bootstrapped certificates and kubeconfig files. 
+###### - https://access.redhat.com/solutions/3782361
 
-(참조) Manually recreate OpenShift Node TLS bootstrapped certificates and kubeconfig files. 
-https://access.redhat.com/solutions/3782361
+###### 각 node에서 node.kubeconfig, client-ca.crt 제거
+```
+mv /etc/origin/node/client-ca.crt{,.old}
+mv /etc/origin/node/node.kubeconfig{,.old}
+```
 
-(수행 방법)
-$ oc serviceaccounts create-kubeconfig node-bootstrapper -n openshift-infra --config /etc/origin/master/admin.kubeconfig > ~/bootstrap.kubeconfig
+###### 각 node에서 /etc/origin/node/certificates directory의 contents 제거
+```
+rm -rf  /etc/origin/node/certificates
+```
 
-각각의 master node에서 admin.kubeconfig 파일을 /etc/origin/node/bootstrap.kubeconfig로 copy
-$ cp /etc/origin/master/admin.kubeconfig /etc/origin/node/bootstrap.kubeconfig
+###### Restart node services 
+```
+systemctl restart atomic-openshift-node.service 
+```
 
-첫번째 명령어 결과물인 ~/bootstrap.kubeconfig 파일을, (master/node 경로 확인)
- - infra and compute node들의 경우, /etc/origin/node/bootstrap.kubeconfig로 저장
- - 모든 master node들의 경우, /etc/origin/master/bootstrap.kubeconfig로 저장
+###### NOTE: node services 재구동 시에 master의 경우 1번, non-master의 경우 2번씩 pending CSR에 대한 approve가 필요함
+```
+oc get csr -o name | xargs oc adm certificate approve
+```
 
-각 node에서 node.kubeconfig, client-ca.crt 제거
-$ mv /etc/origin/node/client-ca.crt{,.old}
+###### 각 노드들의 node certificate 확인 (기본 1년짜리로 갱신됨)
+```
+openssl x509 -noout -dates -in /etc/origin/node/certificates/kubelet-client-current.pem
+openssl x509 -noout -dates -in /etc/origin/node/certificates/kubelet-server-current.pem
+```
+### 9. registry인증서 갱신
 
-$ mv /etc/origin/node/node.kubeconfig{,.old}
-
-각 node에서 /etc/origin/node/certificates directory의 contents 제거
-$ rm -rf  /etc/origin/node/certificates
-
-Restart node services 
-$ systemctl restart atomic-openshift-node.service 
-
-NOTE: node services 재구동 시에 master의 경우 1번, non-master의 경우 2번씩 pending CSR에 대한 approve가 필요함
-
-$ oc get csr -o name | xargs oc adm certificate approve
-
-각 노드들의 node certificate 확인 (기본 1년짜리로 갱신됨)
-$ openssl x509 -noout -dates -in /etc/origin/node/certificates/kubelet-client-current.pem
-
-$ openssl x509 -noout -dates -in /etc/origin/node/certificates/kubelet-server-current.pem
-
-9. **registry인증서 갱신**
-
-(참조) https://docs.openshift.com/container-platform/3.11/install_config/redeploying_certificates.html#redeploying-registry-router-certificates
-
-registry & router의 경우에도 ansible playbook 수행보다는 위 문서의 'Redeploying Registry Certificates Manually', 'Redeploying Router Certificates Manually'에 설명된 방식을 이용하는 것이 좋을 것 같습니다.
+###### (참조) https://docs.openshift.com/container-platform/3.11/install_config/redeploying_certificates.html#redeploying-registry-router-certificates
 
 ###### 1, Switch to the `default` project
 `oc project default`
@@ -248,4 +282,3 @@ REGISTRY_HOSTNAME=`oc get route/docker-registry -o jsonpath='{.spec.host}'`
 
     oc annotate service router service.alpha.openshift.io/serving-cert-secret-name=router-metrics-tls
 
-##### router 인증서  작업 전후 비교
