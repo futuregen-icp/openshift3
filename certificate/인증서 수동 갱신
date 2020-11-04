@@ -1,7 +1,6 @@
-참조) Manually create the master and API certificates when API is down and redeploy-certificates playbook fails
- - https://access.redhat.com/solutions/5140431 
-
 ### 1. master.server.crt 생성
+###### 참조) Manually create the master and API certificates when API is down and redeploy-certificates playbook fails
+###### - https://access.redhat.com/solutions/5140431 
 
 ##### /etc/origin/master/master.server.crt는 API server 인증서이며, CN(common name)과 Subject Alternative Name 정보는 기존 /etc/origin/master/master.server.crt 파일에서 확인할 수 있습니다. 
 ##### NOTE: 'oc adm' command는 /etc/origin/master/ca.serial.txt file이 존재하는 master node에서 수행되어야 합니다.
