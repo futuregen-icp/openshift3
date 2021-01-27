@@ -251,7 +251,7 @@ oc describe node <gpu-node> | egrep ' Capacity|Allocatable|gpu'
         line: "{{ item.line }}"
       with_items:
         - { line: '-A INPUT -p udp -m udp --dport 137 -j ACCEPT' }
-#        - { line: '-A OUPUT -p udp -m udp --sport 137 -j ACCEPT' }
+        - { line: '-A OUTPUT -p udp -m udp --sport 137 -j ACCEPT' }
         - { line: '-A OS_FIREWALL_ALLOW -p udp -m udp --dport 161 -j ACCEPT' }
 
     - name: report 4.2 restart iptables
