@@ -138,14 +138,14 @@ reboot
         name: "{{ item }}"
         state: present
       with_items:
-        - docker
+        - docker-1.13.1-109.gitcccb291.el7_7
 
     - name: report 2.6 Install nvidia-container-toolkit
       yum:
         name: "{{ item }}"
         state: present
       with_items:
-        - nvidia-container-toolkit
+        - nvidia-container-toolkit-1.0.5-2
       when: "inventory_hostname in groups.gpunodes"
 
     - name: report 2.7 OS Parameter
