@@ -108,30 +108,11 @@ reboot
   name: Fusion node pre settings
   become: yes
   remote_user: ebaycloud
-  tasks:
-    - name: report 2.3 Update System to latest
-      yum:
-        name: '*'
-        state: latest
-
-    - name: report 2.4 Install base packages
-      yum:
-        name: "{{ item }}"
-        state: present
-      with_items:
-        - redhat-lsb-core
-        - NetworkManager
-        - wget
-        - git
-        - net-tools
-        - bind-utils
-        - yum-utils
-        - iptables-services
-        - bridge-utils
-        - bash-completion
-        - kexec-tools
-        - sos
-        - psacct
+  tasks:        
+    - name: report 4.3 Put SELinux in permissive mode
+      selinux:
+        policy: targeted
+        state: enforcing
 
     - name: report 2.5 Install Docker
       yum:
@@ -245,15 +226,8 @@ oc describe node <gpu-node> | egrep ' Capacity|Allocatable|gpu'
   remote_user: ebaycloud
   tasks:
     - name: report 4.2 modefy iptables
-      lineinfile:
-        path: "/etc/sysconfig/iptables"
-        insertbefore: "COMMIT"
-        line: "{{ item.line }}"
-      with_items:
-        - { line: '-A INPUT -p udp -m udp --dport 137 -j ACCEPT' }
-        - { line: '-A OUTPUT -p udp -m udp --sport 137 -j ACCEPT' }
-        - { line: '-A OS_FIREWALL_ALLOW -p udp -m udp --dport 161 -j ACCEPT' }
-
+      copy: src=/home/ebaycloud/.futuregen/os_conf_bak_200213/iptables dest=/etc/sysconfig/iptables
+      
     - name: report 4.2 restart iptables
       service: name=iptables state=restarted
 
@@ -262,12 +236,16 @@ oc describe node <gpu-node> | egrep ' Capacity|Allocatable|gpu'
         policy: targeted
         state: permissive
 
-    - name: report 4.4 Add ntp, dns update job to crontab
-      lineinfile:
-        path: "/etc/crontab"
-        line: "{{ item.line }}"
-      with_items:
-        - { line: '*/5 * * * * root /usr/sbin/ntpdate -bu timesync.gmarket.co.kr'}
-        - { line: '45 2 12 * * root /opt/quest/sbin/dnsupdate'}
+```
+- inventory file
+```
+[allserver:children]
+gpunodes
+cpunodes
+
+[gpunodes]
+
+[cpunodes]
+
 
 ```
