@@ -109,7 +109,7 @@ reboot
   become: yes
   remote_user: ebaycloud
   tasks:        
-    - name: report 4.3 Put SELinux in permissive mode
+    - name: report 4.3 Put SELinux in enforcing mode
       selinux:
         policy: targeted
         state: enforcing
