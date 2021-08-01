@@ -292,10 +292,10 @@ $ tar cvfpz ~OCP3.11.161/etcd.backup.tar.gz ${MYBACKUPDIR}/etcd-backup/
 **3.11.161 -> 3.11.219**
 
 ```
-## master, registry upgrade
+## master, route, registry upgrade
 ansible-playbook -i /root/hosts playbooks/byo/openshift-cluster/upgrades/v3_11/upgrade_control_plane.yml
 
-## worker(computer) metirc, cluster-monitoring, route, node upgrade
+## worker(computer) metirc, cluster-monitoring, node upgrade
 ansible-playbook -i /root/hosts playbooks/byo/openshift-cluster/upgrades/v3_11/upgrade_nodes.yml
 
 ## logging upgrade
